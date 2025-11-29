@@ -11,7 +11,7 @@ import {
   Put,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { User } from './infterfaces/user.interface';
+import { User } from './interfaces/user.interface';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 
@@ -68,12 +68,19 @@ export class UsersController {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
       } else if (e.message === 'Invalid old password') {
         throw new HttpException('Invalid old password', HttpStatus.FORBIDDEN);
+      } else if (
+        e.message === 'Request body does not contain required fields'
+      ) {
+        throw new HttpException(
+          'Request body does not contain required fields',
+          HttpStatus.BAD_REQUEST,
+        );
       }
     }
   }
 
   @Delete(':id')
-  delele(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string): string {
+  delete(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string): string {
     try {
       return this.usersService.delete(id);
     } catch (e) {

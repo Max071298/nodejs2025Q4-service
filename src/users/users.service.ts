@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { User } from './infterfaces/user.interface';
+import { User } from './interfaces/user.interface';
 import { CreateUserDto } from './dto/create-user.dto';
 import { randomUUID } from 'crypto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
@@ -10,9 +10,9 @@ export class UsersService {
 
   create(user: CreateUserDto) {
     const { login, password } = user;
-    if (user === undefined || password === undefined)
+    if (login === undefined || password === undefined)
       throw new Error('Request body does not contain required fields');
-    const isALreadyExist = this.users.find((user) => user.id === id);
+    const isALreadyExist = this.users.find((user) => user.login === login);
     if (isALreadyExist) throw new Error('Current user already exists');
 
     const id = randomUUID();
@@ -44,6 +44,11 @@ export class UsersService {
   updatePassword(id: string, updatePassword: UpdatePasswordDto): Partial<User> {
     const user = this.users.find((user) => user.id === id);
     if (!user) throw new Error('User not found');
+    if (
+      updatePassword.oldPassword === undefined ||
+      updatePassword.newPassword === undefined
+    )
+      throw new Error('Request body does not contain required fields');
     if (user.password !== updatePassword.oldPassword)
       throw new Error('Invalid old password');
     user.password = updatePassword.newPassword;
