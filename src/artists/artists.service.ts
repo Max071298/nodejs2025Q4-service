@@ -4,6 +4,7 @@ import { CreateArtistDto } from './dto/create-artist.dto';
 import { randomUUID } from 'crypto';
 import { AlbumsService } from 'src/albums/albums.service';
 import { TracksService } from 'src/tracks/tracks.service';
+import { FavsService } from 'src/favs/favs.service';
 
 @Injectable()
 export class ArtistsService {
@@ -13,6 +14,8 @@ export class ArtistsService {
     private albumsService: AlbumsService,
     @Inject(forwardRef(() => TracksService))
     private tracksService: TracksService,
+    @Inject(forwardRef(() => FavsService))
+    private favsService: FavsService,
   ) {}
 
   findAll(): Artist[] {
@@ -60,6 +63,7 @@ export class ArtistsService {
 
     if (artistPos === -1) throw new Error('Artist not found');
 
+    this.favsService.deleteArtist(id, false);
     this.artists.splice(artistPos, 1);
     this.albumsService.removeArtistfromAlbums(id);
     this.tracksService.removeArtistFromTracks(id);

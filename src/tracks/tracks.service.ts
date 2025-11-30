@@ -4,6 +4,7 @@ import { ArtistsService } from 'src/artists/artists.service';
 import { Track } from './interfaces/track.interface';
 import { CreateTrackDto } from './dto/create-track.dto';
 import { AlbumsService } from 'src/albums/albums.service';
+import { FavsService } from 'src/favs/favs.service';
 
 @Injectable()
 export class TracksService {
@@ -13,6 +14,8 @@ export class TracksService {
     private artistsService: ArtistsService,
     @Inject(forwardRef(() => AlbumsService))
     private albumsService: AlbumsService,
+    @Inject(forwardRef(() => FavsService))
+    private favsService: FavsService,
   ) {}
 
   findAll(): Track[] {
@@ -82,9 +85,10 @@ export class TracksService {
 
     if (trackPos === -1) throw new Error('Track not found');
 
+    this.favsService.deleteTrack(id, false);
     this.tracks.splice(trackPos, 1);
 
-    return `Album with id ${id} successfully deleted`;
+    return `Track with id ${id} successfully deleted`;
   }
 
   removeArtistFromTracks(id: string) {
