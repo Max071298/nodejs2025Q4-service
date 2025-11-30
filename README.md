@@ -8,7 +8,7 @@
 ## Downloading
 
 ```
-git clone {repository URL}
+git clone https://github.com/Max071298/nodejs2025Q4-service
 ```
 
 ## Installing NPM modules
@@ -17,6 +17,9 @@ git clone {repository URL}
 npm install
 ```
 
+## Create .env file from .env.example
+
+
 ## Running application
 
 ```
@@ -24,12 +27,12 @@ npm start
 ```
 
 After starting the app on port (4000 as default) you can open
-in your browser OpenAPI documentation by typing http://localhost:4000/doc/.
+in your browser OpenAPI documentation by typing http://localhost:4000/api.
 For more information about OpenAPI/Swagger please visit https://swagger.io/.
 
 ## Testing
 
-After application running open new terminal and enter:
+**After application running** open new terminal and enter:
 
 To run all tests without authorization
 
