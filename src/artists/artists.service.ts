@@ -3,6 +3,7 @@ import { Artist } from './interfaces/artist.interface';
 import { CreateArtistDto } from './dto/create-artist.dto';
 import { randomUUID } from 'crypto';
 import { AlbumsService } from 'src/albums/albums.service';
+import { TracksService } from 'src/tracks/tracks.service';
 
 @Injectable()
 export class ArtistsService {
@@ -10,6 +11,8 @@ export class ArtistsService {
   constructor(
     @Inject(forwardRef(() => AlbumsService))
     private albumsService: AlbumsService,
+    @Inject(forwardRef(() => TracksService))
+    private tracksService: TracksService,
   ) {}
 
   findAll(): Artist[] {
@@ -59,6 +62,7 @@ export class ArtistsService {
 
     this.artists.splice(artistPos, 1);
     this.albumsService.removeArtistfromAlbums(id);
+    this.tracksService.removeArtistFromTracks(id);
 
     return `Artist with id ${id} successfully deleted`;
   }

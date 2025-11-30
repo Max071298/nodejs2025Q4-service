@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
 import { Album } from './interfaces/album.interface';
 import { CreateAlbumDto } from './dto/create-album.dto';
 import { ArtistsService } from 'src/artists/artists.service';
+import { TracksService } from 'src/tracks/tracks.service';
 
 @Injectable()
 export class AlbumsService {
@@ -10,6 +11,8 @@ export class AlbumsService {
   constructor(
     @Inject(forwardRef(() => ArtistsService))
     private artistsService: ArtistsService,
+    @Inject(forwardRef(() => TracksService))
+    private tracksService: TracksService,
   ) {}
 
   findAll(): Album[] {
@@ -75,6 +78,7 @@ export class AlbumsService {
     if (albumPos === -1) throw new Error('Album not found');
 
     this.albums.splice(albumPos, 1);
+    this.tracksService.removeAlbumFromTracks(id);
 
     return `Album with id ${id} successfully deleted`;
   }
