@@ -61,6 +61,18 @@ export class TracksService {
 
     const { name, artistId, albumId, duration } = createTrackDto;
 
+    if (
+      (name !== undefined && typeof name !== 'string') ||
+      (artistId !== undefined &&
+        typeof artistId !== 'string' &&
+        artistId !== null) ||
+      (albumId !== undefined &&
+        typeof albumId !== 'string' &&
+        albumId !== null) ||
+      (duration !== undefined && typeof duration !== 'number')
+    )
+      throw new Error('Invalid dto');
+
     if (typeof artistId === 'string') {
       const artist = this.artistsService.findOne(artistId);
       if (artist) track.artistId = artistId;

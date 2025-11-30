@@ -2,6 +2,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   HttpException,
   HttpStatus,
   Param,
@@ -35,6 +36,7 @@ export class FavsController {
   }
 
   @Delete('track/:id')
+  @HttpCode(204)
   deleteTrack(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     try {
       return this.favsService.deleteTrack(id, true);
@@ -59,6 +61,7 @@ export class FavsController {
   }
 
   @Delete('album/:id')
+  @HttpCode(204)
   deleteAlbum(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     try {
       return this.favsService.deleteAlbum(id, true);
@@ -83,6 +86,7 @@ export class FavsController {
   }
 
   @Delete('artist/:id')
+  @HttpCode(204)
   deleteArtist(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     try {
       return this.favsService.deleteArtist(id, true);

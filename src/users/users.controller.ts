@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   HttpException,
   HttpStatus,
   Param,
@@ -80,6 +81,7 @@ export class UsersController {
   }
 
   @Delete(':id')
+  @HttpCode(204)
   delete(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string): string {
     try {
       return this.usersService.delete(id);

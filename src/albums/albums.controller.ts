@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   HttpException,
   HttpStatus,
   Param,
@@ -62,11 +63,14 @@ export class AlbumsController {
         throw new HttpException('Album not found', HttpStatus.NOT_FOUND);
       } else if (e.message === 'Artist not found') {
         throw new HttpException('Artist not found', HttpStatus.NOT_FOUND);
+      } else if (e.message === 'Invalid dto') {
+        throw new HttpException('Invalid dto', HttpStatus.BAD_REQUEST);
       }
     }
   }
 
   @Delete(':id')
+  @HttpCode(204)
   delete(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string): string {
     try {
       return this.albumsService.delete(id);

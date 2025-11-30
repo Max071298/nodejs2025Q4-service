@@ -31,10 +31,8 @@ export class ArtistsService {
 
   create(createArtistDto: CreateArtistDto) {
     const { name, grammy } = createArtistDto;
-    if (name === undefined || typeof grammy !== 'boolean')
+    if (typeof name !== 'string' || typeof grammy !== 'boolean')
       throw new Error('Request body does not contain required fields');
-    const isALreadyExist = this.artists.find((artist) => artist.name === name);
-    if (isALreadyExist) throw new Error('Current artist already exists');
 
     const id = randomUUID();
 
@@ -45,12 +43,12 @@ export class ArtistsService {
   }
 
   update(id: string, createArtistDto: CreateArtistDto) {
+    const { name, grammy } = createArtistDto;
+    if (typeof name !== 'string' && typeof grammy !== 'boolean')
+      throw new Error('Request body does not contain required fields');
+
     const artist = this.artists.find((artist) => artist.id === id);
     if (!artist) throw new Error('Artist not found');
-
-    const { name, grammy } = createArtistDto;
-    if (name === undefined && typeof grammy !== 'boolean')
-      throw new Error('Request body does not contain required fields');
 
     if (name) artist.name = name;
     if (typeof grammy === 'boolean') artist.grammy = grammy;

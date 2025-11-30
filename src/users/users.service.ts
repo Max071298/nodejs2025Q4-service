@@ -10,13 +10,13 @@ export class UsersService {
 
   create(user: CreateUserDto) {
     const { login, password } = user;
-    if (login === undefined || password === undefined)
+    if (typeof login !== 'string' || typeof password !== 'string')
       throw new Error('Request body does not contain required fields');
     const isALreadyExist = this.users.find((user) => user.login === login);
     if (isALreadyExist) throw new Error('Current user already exists');
 
     const id = randomUUID();
-    const version = 0;
+    const version = 1;
     const createdAt = Date.now();
     const updatedAt = createdAt;
     const newUser = { login, password, id, version, createdAt, updatedAt };
@@ -42,13 +42,15 @@ export class UsersService {
   }
 
   updatePassword(id: string, updatePassword: UpdatePasswordDto): Partial<User> {
-    const user = this.users.find((user) => user.id === id);
-    if (!user) throw new Error('User not found');
     if (
       updatePassword.oldPassword === undefined ||
       updatePassword.newPassword === undefined
     )
       throw new Error('Request body does not contain required fields');
+
+    const user = this.users.find((user) => user.id === id);
+    if (!user) throw new Error('User not found');
+
     if (user.password !== updatePassword.oldPassword)
       throw new Error('Invalid old password');
     user.password = updatePassword.newPassword;

@@ -62,6 +62,13 @@ export class AlbumsService {
 
     const { name, year, artistId } = createAlbumDto;
 
+    if (
+      (name !== undefined && typeof name !== 'string') ||
+      (year !== undefined && typeof year !== 'number') ||
+      (artistId !== undefined && typeof artistId !== 'string')
+    )
+      throw new Error('Invalid dto');
+
     if (typeof artistId === 'string') {
       const artist = this.artistsService.findOne(artistId);
       if (artist) album.artistId = artistId;
