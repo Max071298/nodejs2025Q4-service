@@ -19,12 +19,12 @@ export class FavsService {
   ) {}
 
   async findAll(): Promise<FavsResponse> {
-    return {
-      artists: await this.favs.artists.map(
+    return await {
+      artists: this.favs.artists.map(
         async (artistId) => await this.artistsService.findOne(artistId),
       ),
-      albums: this.favs.albums.map((albumId) =>
-        this.albumsService.findOne(albumId),
+      albums: this.favs.albums.map(
+        async (albumId) => await this.albumsService.findOne(albumId),
       ),
       tracks: this.favs.tracks.map((trackId) =>
         this.tracksService.findOne(trackId),
