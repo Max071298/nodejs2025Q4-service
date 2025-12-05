@@ -26,8 +26,8 @@ export class FavsService {
       albums: this.favs.albums.map(
         async (albumId) => await this.albumsService.findOne(albumId),
       ),
-      tracks: this.favs.tracks.map((trackId) =>
-        this.tracksService.findOne(trackId),
+      tracks: this.favs.tracks.map(
+        async (trackId) => await this.tracksService.findOne(trackId),
       ),
     };
   }

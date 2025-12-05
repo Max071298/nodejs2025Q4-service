@@ -5,5 +5,5 @@ import { Track } from 'src/tracks/interfaces/track.interface';
 export interface FavsResponse {
   artists: Promise<Artist>[];
   albums: Promise<Album>[];
-  tracks: Track[];
+  tracks: Promise<Track>[];
 }

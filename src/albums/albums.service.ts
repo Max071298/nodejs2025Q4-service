@@ -19,7 +19,6 @@ export class AlbumsService {
   @InjectRepository(AlbumsEntity)
   private readonly albumsRepository: Repository<AlbumsEntity>;
 
-  private readonly albums: Album[] = [];
   constructor(
     @Inject(forwardRef(() => ArtistsService))
     private artistsService: ArtistsService,
