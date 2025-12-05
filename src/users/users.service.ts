@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { User } from './interfaces/user.interface';
 import { CreateUserDto } from './dto/create-user.dto';
 import { randomUUID } from 'crypto';
@@ -12,22 +16,20 @@ export class UsersService {
   @InjectRepository(UsersEntity)
   private usersRepository: Repository<UsersEntity>;
 
-  private readonly users: User[] = [];
-
   async create(user: CreateUserDto): Promise<Partial<User>> {
     const { login, password } = user;
-    if (typeof login !== 'string' || typeof password !== 'string')
-      throw new Error('Request body does not contain required fields');
 
     const isALreadyExist = await this.usersRepository.findOneBy({
       login: login,
     });
 
-    if (isALreadyExist) throw new Error('Current user already exists');
+    if (isALreadyExist)
+      throw new ForbiddenException('Current user already exists');
 
     const newUser = await this.usersRepository.create(user);
 
     newUser.id = randomUUID();
+    newUser.password = password;
     newUser.version = 1;
     newUser.createdAt = Date.now();
     newUser.updatedAt = newUser.createdAt;
@@ -44,7 +46,7 @@ export class UsersService {
   async findOne(id: string): Promise<Partial<User>> {
     const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundException('User not found');
     } else {
       return user.toResponse();
     }
@@ -54,17 +56,12 @@ export class UsersService {
     id: string,
     updatePassword: UpdatePasswordDto,
   ): Promise<Partial<User>> {
-    if (
-      updatePassword.oldPassword === undefined ||
-      updatePassword.newPassword === undefined
-    )
-      throw new Error('Request body does not contain required fields');
-
     const user = await this.usersRepository.findOne({ where: { id } });
-    if (!user) throw new Error('User not found');
+    if (!user) throw new NotFoundException('User not found');
 
     if (user.password !== updatePassword.oldPassword)
-      throw new Error('Invalid old password');
+      throw new ForbiddenException('Invalid old password');
+
     user.password = updatePassword.newPassword;
     user.updatedAt = Date.now();
     user.version++;
@@ -75,7 +72,7 @@ export class UsersService {
   async delete(id: string): Promise<string> {
     const result = await this.usersRepository.delete(id);
 
-    if (result.affected) return `User with id ${id} successfully deleted`;
+    if (result.affected) return '';
 
     throw new NotFoundException('User not found');
   }

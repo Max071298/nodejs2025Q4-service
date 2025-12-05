@@ -29,32 +29,12 @@ export class UsersController {
   async findOne(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
   ): Promise<Partial<User>> {
-    try {
-      return await this.usersService.findOne(id);
-    } catch (e) {
-      if (e.message === 'User not found') {
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-      }
-    }
+    return await this.usersService.findOne(id);
   }
 
   @Post()
   async create(@Body() createUserDto: CreateUserDto) {
-    try {
-      return await this.usersService.create(createUserDto);
-    } catch (e) {
-      if (e.message === 'Request body does not contain required fields') {
-        throw new HttpException(
-          'Request body does not contain required fields',
-          HttpStatus.BAD_REQUEST,
-        );
-      } else if (e.message === 'Current user already exists') {
-        throw new HttpException(
-          'Current user already exists',
-          HttpStatus.FORBIDDEN,
-        );
-      }
-    }
+    return await this.usersService.create(createUserDto);
   }
 
   @Put(':id')
@@ -62,22 +42,7 @@ export class UsersController {
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Body() updatePasswordDto: UpdatePasswordDto,
   ) {
-    try {
-      return await this.usersService.updatePassword(id, updatePasswordDto);
-    } catch (e) {
-      if (e.message === 'User not found') {
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-      } else if (e.message === 'Invalid old password') {
-        throw new HttpException('Invalid old password', HttpStatus.FORBIDDEN);
-      } else if (
-        e.message === 'Request body does not contain required fields'
-      ) {
-        throw new HttpException(
-          'Request body does not contain required fields',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-    }
+    return await this.usersService.updatePassword(id, updatePasswordDto);
   }
 
   @Delete(':id')

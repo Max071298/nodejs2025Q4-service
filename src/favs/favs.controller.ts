@@ -17,8 +17,8 @@ export class FavsController {
   constructor(private favsService: FavsService) {}
 
   @Get()
-  findAll(): FavsResponse {
-    return this.favsService.findAll();
+  async findAll(): Promise<FavsResponse> {
+    return await this.favsService.findAll();
   }
 
   @Post('track/:id')
