@@ -1,12 +1,26 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Favs } from './interfaces/favs.interface';
 import { AlbumsService } from 'src/albums/albums.service';
 import { ArtistsService } from 'src/artists/artists.service';
 import { TracksService } from 'src/tracks/tracks.service';
 import { FavsResponse } from './interfaces/favs-response.interface';
+import { InjectRepository } from '@nestjs/typeorm';
+import { FavsEntity } from './entities/favs.entity';
+import { Repository } from 'typeorm';
+import { TrackEntity } from 'src/tracks/entities/tracks.entity';
+import { AlbumEntity } from 'src/albums/entities/albums.entity';
+import { ArtistEntity } from 'src/artists/entities/artists.entity';
 
 @Injectable()
 export class FavsService {
+  @InjectRepository(FavsEntity)
+  private readonly favsRepository: Repository<FavsEntity>;
+
   private readonly favs: Favs = { artists: [], albums: [], tracks: [] };
 
   constructor(
@@ -18,88 +32,104 @@ export class FavsService {
     private tracksService: TracksService,
   ) {}
 
-  async findAll(): Promise<FavsResponse> {
-    return await {
-      artists: this.favs.artists.map(
-        async (artistId) => await this.artistsService.findOne(artistId),
-      ),
-      albums: this.favs.albums.map(
-        async (albumId) => await this.albumsService.findOne(albumId),
-      ),
-      tracks: this.favs.tracks.map(
-        async (trackId) => await this.tracksService.findOne(trackId),
-      ),
-    };
+  async findAll() {
+    let favs = await this.favsRepository.findOne({
+      where: {},
+      relations: ['artists', 'albums', 'tracks'],
+    });
+
+    if (!favs)
+      favs = await this.favsRepository.create({
+        artists: [],
+        albums: [],
+        tracks: [],
+      });
+
+    await await this.favsRepository.save(favs);
+
+    return favs;
   }
 
-  addTrack(id: string): string {
-    this.tracksService.findOne(id);
-    const isAlreadyInFavs = this.favs.tracks.find((trackId) => trackId === id);
+  async addTrack(id: string): Promise<string> {
+    const favs = await this.findAll();
 
-    if (isAlreadyInFavs) return `Track with id ${id} is already in favorites`;
+    if (favs.tracks.find((track) => track.id === id))
+      return `Track with id ${id} is already in favorites`;
 
-    this.favs.tracks.push(id);
+    const track = (await this.tracksService.findOne(id)) as TrackEntity;
+
+    favs.tracks.push(track);
+
+    await this.favsRepository.save(favs);
+
     return `Track with id ${id} was successfully added to favorites`;
   }
 
-  deleteTrack(id: string, withErrorHandler: boolean): string {
-    const trackPos = this.favs.tracks.findIndex((trackId) => trackId === id);
-    if (trackPos === -1) {
-      if (withErrorHandler) {
-        throw new Error('Track is not favorite');
-      } else return '';
-    }
+  async deleteTrack(id: string) {
+    const favs = await this.findAll();
 
-    this.favs.tracks.splice(trackPos, 1);
-    return `Track with id ${id} was successfully deleted from favorites`;
+    const trackPos = favs.tracks.findIndex((track) => track.id === id);
+
+    if (trackPos === -1) throw new NotFoundException('Track is not favorite');
+
+    favs.tracks.splice(trackPos, 1);
+    await this.favsRepository.save(favs);
+
+    return ``;
   }
 
-  addAlbum(id: string): string {
-    this.albumsService.findOne(id);
-    const isAlreadyInFavs = this.favs.albums.find((albumId) => albumId === id);
+  async addAlbum(id: string) {
+    const favs = await this.findAll();
 
-    if (isAlreadyInFavs) return `Album with id ${id} is already in favorites`;
+    if (favs.albums.find((album) => album.id === id))
+      return `Album with id ${id} is already in favorites`;
 
-    this.favs.albums.push(id);
+    const album = (await this.albumsService.findOne(id)) as AlbumEntity;
+
+    favs.albums.push(album);
+
+    await this.favsRepository.save(favs);
     return `Album with id ${id} was successfully added to favorites`;
   }
 
-  deleteAlbum(id: string, withErrorHandler: boolean): string {
-    const albumPos = this.favs.albums.findIndex((albumId) => albumId === id);
-    if (albumPos === -1) {
-      if (withErrorHandler) {
-        throw new Error('Album is not favorite');
-      } else return '';
-    }
+  async deleteAlbum(id: string) {
+    const favs = await this.findAll();
 
-    this.favs.albums.splice(albumPos, 1);
-    return `Album with id ${id} was successfully deleted from favorites`;
+    const albumPos = favs.albums.findIndex((album) => album.id === id);
+
+    if (albumPos === -1) throw new NotFoundException('Album is not favorite');
+
+    favs.albums.splice(albumPos, 1);
+    await this.favsRepository.save(favs);
+
+    return ``;
   }
 
-  addArtist(id: string): string {
-    this.artistsService.findOne(id);
+  async addArtist(id: string) {
+    const favs = await this.findAll();
 
-    const isAlreadyInFavs = this.favs.artists.find(
-      (artistId) => artistId === id,
-    );
+    if (favs.artists.find((artist) => artist.id === id))
+      return `Artist with id ${id} is already in favorites`;
 
-    if (isAlreadyInFavs) return `Artist with id ${id} is already in favorites`;
+    const artist = (await this.artistsService.findOne(id)) as ArtistEntity;
 
-    this.favs.artists.push(id);
+    favs.artists.push(artist);
+
+    await this.favsRepository.save(favs);
+
     return `Artist with id ${id} was successfully added to favorites`;
   }
 
-  deleteArtist(id: string, withErrorHandler: boolean): string {
-    const artistPos = this.favs.artists.findIndex(
-      (artistId) => artistId === id,
-    );
-    if (artistPos === -1) {
-      if (withErrorHandler) {
-        throw new Error('Artist is not favorite');
-      } else return '';
-    }
+  async deleteArtist(id: string) {
+    const favs = await this.findAll();
 
-    this.favs.artists.splice(artistPos, 1);
-    return `Artist with id ${id} was successfully deleted from favorites`;
+    const artistPos = favs.artists.findIndex((artist) => artist.id === id);
+
+    if (artistPos === -1) throw new NotFoundException('Artist is not favorite');
+
+    favs.artists.splice(artistPos, 1);
+    await this.favsRepository.save(favs);
+
+    return ``;
   }
 }

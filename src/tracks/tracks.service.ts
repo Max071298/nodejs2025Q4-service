@@ -4,30 +4,19 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
-import { randomUUID } from 'crypto';
-import { ArtistsService } from 'src/artists/artists.service';
 import { Track } from './interfaces/track.interface';
 import { CreateTrackDto } from './dto/create-track.dto';
-import { AlbumsService } from 'src/albums/albums.service';
 import { FavsService } from 'src/favs/favs.service';
 import { InjectRepository } from '@nestjs/typeorm';
-import { TracksEntity } from './entities/tracks.entity';
-import { Repository } from 'typeorm';
+import { TrackEntity } from './entities/tracks.entity';
+import { QueryFailedError, Repository } from 'typeorm';
 
 @Injectable()
 export class TracksService {
-  @InjectRepository(TracksEntity)
-  private readonly tracksRepository: Repository<TracksEntity>;
-
-  constructor(
-    @Inject(forwardRef(() => ArtistsService))
-    private artistsService: ArtistsService,
-    @Inject(forwardRef(() => AlbumsService))
-    private albumsService: AlbumsService,
-    @Inject(forwardRef(() => FavsService))
-    private favsService: FavsService,
-  ) {}
+  @InjectRepository(TrackEntity)
+  private readonly tracksRepository: Repository<TrackEntity>;
 
   async findAll(): Promise<Track[]> {
     return await this.tracksRepository.find();
@@ -46,22 +35,23 @@ export class TracksService {
       throw new BadRequestException(
         'artistId and albumId must be identified (or be null)',
       );
+    try {
+      const newTrack = await this.tracksRepository.create(createTrackDto);
 
-    if (artistId) {
-      await this.artistsService.findOne(artistId);
+      return await this.tracksRepository.save(newTrack);
+    } catch (err) {
+      if (err instanceof QueryFailedError && err.driverError.code === '23503') {
+        if (err.driverError.constraint === 'tracks_artistid_fkey')
+          throw new UnprocessableEntityException(
+            'Artist with provided artistId doesn"t exist',
+          );
+
+        if (err.driverError.constraint === 'tracks_albumid_fkey')
+          throw new UnprocessableEntityException(
+            'Album with provided albumId doesn"t exist',
+          );
+      }
     }
-
-    if (albumId) {
-      await this.albumsService.findOne(albumId);
-    }
-
-    const id = randomUUID();
-
-    const newTrack = await this.tracksRepository.create(
-      Object.assign({}, { id }, createTrackDto),
-    );
-
-    return await this.tracksRepository.save(newTrack);
   }
 
   async update(id: string, createTrackDto: CreateTrackDto): Promise<Track> {
@@ -76,51 +66,35 @@ export class TracksService {
         'artistId and albumId must be identified (or be null)',
       );
 
-    if (newTrack) {
-      const artist = await this.artistsService.findOne(artistId);
-      if (artist) newTrack.artistId = artistId;
-    }
-
-    if (albumId) {
-      const album = await this.albumsService.findOne(albumId);
-      if (album) newTrack.albumId = albumId;
-    }
-
-    if (!artistId) newTrack.artistId = artistId;
-    if (!albumId) newTrack.albumId = albumId;
-
+    newTrack.artistId = artistId;
+    newTrack.albumId = albumId;
     newTrack.name = name;
     newTrack.duration = duration;
 
-    return await this.tracksRepository.save(newTrack);
+    try {
+      return await this.tracksRepository.save(newTrack);
+    } catch (err) {
+      if (err instanceof QueryFailedError && err.driverError.code === '23503') {
+        if (err.driverError.constraint === 'tracks_artistid_fkey')
+          throw new UnprocessableEntityException(
+            'Artist with provided artistId doesn"t exist',
+          );
+
+        if (err.driverError.constraint === 'tracks_albumid_fkey')
+          throw new UnprocessableEntityException(
+            'Album with provided albumId doesn"t exist',
+          );
+      }
+    }
   }
 
   async delete(id: string): Promise<string> {
     const result = await this.tracksRepository.delete(id);
 
     if (result.affected) {
-      this.favsService.deleteTrack(id, false);
       return '';
     }
 
     throw new NotFoundException('Track not found');
-  }
-
-  async removeArtistFromTracks(id: string): Promise<void> {
-    (await this.tracksRepository.find({ where: { artistId: id } })).forEach(
-      async (newTrack) => {
-        newTrack.artistId = null;
-        await this.tracksRepository.save(newTrack);
-      },
-    );
-  }
-
-  async removeAlbumFromTracks(id: string): Promise<void> {
-    (await this.tracksRepository.find({ where: { albumId: id } })).forEach(
-      async (newTrack) => {
-        newTrack.albumId = null;
-        await this.tracksRepository.save(newTrack);
-      },
-    );
   }
 }

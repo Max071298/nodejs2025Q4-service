@@ -5,16 +5,15 @@ import {
 } from '@nestjs/common';
 import { User } from './interfaces/user.interface';
 import { CreateUserDto } from './dto/create-user.dto';
-import { randomUUID } from 'crypto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UsersEntity } from './entities/users.entity';
+import { UserEntity } from './entities/users.entity';
 import { Repository } from 'typeorm';
 
 @Injectable()
 export class UsersService {
-  @InjectRepository(UsersEntity)
-  private usersRepository: Repository<UsersEntity>;
+  @InjectRepository(UserEntity)
+  private usersRepository: Repository<UserEntity>;
 
   async create(user: CreateUserDto): Promise<Partial<User>> {
     const { login, password } = user;
@@ -28,7 +27,6 @@ export class UsersService {
 
     const newUser = await this.usersRepository.create(user);
 
-    newUser.id = randomUUID();
     newUser.password = password;
     newUser.version = 1;
     newUser.createdAt = Date.now();

@@ -1,17 +1,17 @@
-import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('users')
-export class UsersEntity {
-  @PrimaryColumn()
+export class UserEntity {
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column('text')
   login: string;
 
-  @Column()
+  @Column('text')
   password: string;
 
-  @Column()
+  @Column({ type: 'int', default: 1 })
   version: number;
 
   @Column({ type: 'bigint' })

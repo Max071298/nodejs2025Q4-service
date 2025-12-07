@@ -10,14 +10,13 @@ import {
   Post,
 } from '@nestjs/common';
 import { FavsService } from './favs.service';
-import { FavsResponse } from './interfaces/favs-response.interface';
 
 @Controller('favs')
 export class FavsController {
   constructor(private favsService: FavsService) {}
 
   @Get()
-  async findAll(): Promise<FavsResponse> {
+  async findAll() {
     return await this.favsService.findAll();
   }
 
@@ -38,12 +37,7 @@ export class FavsController {
   @Delete('track/:id')
   @HttpCode(204)
   deleteTrack(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
-    try {
-      return this.favsService.deleteTrack(id, true);
-    } catch (e) {
-      if (e.message === 'Track is not favorite')
-        throw new HttpException('Track is not favorite', HttpStatus.NOT_FOUND);
-    }
+    return this.favsService.deleteTrack(id);
   }
 
   @Post('album/:id')
@@ -63,12 +57,7 @@ export class FavsController {
   @Delete('album/:id')
   @HttpCode(204)
   deleteAlbum(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
-    try {
-      return this.favsService.deleteAlbum(id, true);
-    } catch (e) {
-      if (e.message === 'Album is not favorite')
-        throw new HttpException('Album is not favorite', HttpStatus.NOT_FOUND);
-    }
+    return this.favsService.deleteAlbum(id);
   }
 
   @Post('artist/:id')
@@ -88,11 +77,6 @@ export class FavsController {
   @Delete('artist/:id')
   @HttpCode(204)
   deleteArtist(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
-    try {
-      return this.favsService.deleteArtist(id, true);
-    } catch (e) {
-      if (e.message === 'Artist is not favorite')
-        throw new HttpException('Artist is not favorite', HttpStatus.NOT_FOUND);
-    }
+    return this.favsService.deleteArtist(id);
   }
 }
