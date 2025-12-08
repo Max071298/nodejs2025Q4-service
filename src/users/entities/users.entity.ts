@@ -5,19 +5,19 @@ export class UserEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column('text')
+  @Column({ type: 'text', nullable: false })
   login: string;
 
-  @Column('text')
+  @Column({ type: 'text', nullable: false })
   password: string;
 
-  @Column({ type: 'int', default: 1 })
+  @Column({ type: 'int', default: 1, nullable: false })
   version: number;
 
-  @Column({ type: 'bigint' })
+  @Column({ type: 'bigint', nullable: false })
   createdAt: number;
 
-  @Column({ type: 'bigint' })
+  @Column({ type: 'bigint', nullable: false })
   updatedAt: number;
 
   toResponse() {

@@ -15,10 +15,10 @@ export class AlbumEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ type: 'text', nullable: false })
   name: string;
 
-  @Column()
+  @Column({ type: 'int', nullable: false })
   year: number;
 
   @Column({ type: 'uuid', nullable: true })

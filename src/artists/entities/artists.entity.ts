@@ -7,10 +7,10 @@ export class ArtistEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ type: 'text', nullable: false })
   name: string;
 
-  @Column()
+  @Column({ type: 'bool', nullable: false })
   grammy: boolean;
 
   @OneToMany(() => AlbumEntity, (album) => album.artist)

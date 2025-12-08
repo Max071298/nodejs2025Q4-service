@@ -13,7 +13,7 @@ export class TrackEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ type: 'text', nullable: false })
   name: string;
 
   @Column({ type: 'uuid', nullable: true })
@@ -22,7 +22,7 @@ export class TrackEntity {
   @Column({ type: 'uuid', nullable: true })
   albumId: string | null;
 
-  @Column('numeric')
+  @Column({ type: 'numeric', nullable: false })
   duration: number;
 
   @ManyToOne(() => ArtistEntity, (artist) => artist.tracks, {
