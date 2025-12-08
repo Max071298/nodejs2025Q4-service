@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class Migration1765219087096 implements MigrationInterface {
-    name = 'Migration1765219087096'
+export class Migration1765221631934 implements MigrationInterface {
+    name = 'Migration1765221631934'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`ALTER TABLE "albums" DROP CONSTRAINT "albums_artistid_fkey"`);
@@ -17,12 +17,6 @@ export class Migration1765219087096 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "favs_albums" ADD CONSTRAINT "PK_4ef6e5adf1218448adc31434375" PRIMARY KEY ("favId", "albumId")`);
         await queryRunner.query(`ALTER TABLE "favs_tracks" ADD CONSTRAINT "PK_5b35195f43e0a5cf3a321e46c77" PRIMARY KEY ("favId", "trackId")`);
         await queryRunner.query(`ALTER TABLE "users" ALTER COLUMN "version" SET NOT NULL`);
-        await queryRunner.query(`ALTER TABLE "artists" DROP COLUMN "name"`);
-        await queryRunner.query(`ALTER TABLE "artists" ADD "name" character varying NOT NULL`);
-        await queryRunner.query(`ALTER TABLE "albums" DROP COLUMN "name"`);
-        await queryRunner.query(`ALTER TABLE "albums" ADD "name" character varying NOT NULL`);
-        await queryRunner.query(`ALTER TABLE "tracks" DROP COLUMN "name"`);
-        await queryRunner.query(`ALTER TABLE "tracks" ADD "name" character varying NOT NULL`);
         await queryRunner.query(`ALTER TABLE "tracks" ALTER COLUMN "duration" SET NOT NULL`);
         await queryRunner.query(`ALTER TABLE "favs_artists" ALTER COLUMN "favId" SET NOT NULL`);
         await queryRunner.query(`ALTER TABLE "favs_artists" ALTER COLUMN "artistId" SET NOT NULL`);
@@ -70,12 +64,6 @@ export class Migration1765219087096 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "favs_artists" ALTER COLUMN "artistId" DROP NOT NULL`);
         await queryRunner.query(`ALTER TABLE "favs_artists" ALTER COLUMN "favId" DROP NOT NULL`);
         await queryRunner.query(`ALTER TABLE "tracks" ALTER COLUMN "duration" DROP NOT NULL`);
-        await queryRunner.query(`ALTER TABLE "tracks" DROP COLUMN "name"`);
-        await queryRunner.query(`ALTER TABLE "tracks" ADD "name" text NOT NULL`);
-        await queryRunner.query(`ALTER TABLE "albums" DROP COLUMN "name"`);
-        await queryRunner.query(`ALTER TABLE "albums" ADD "name" text NOT NULL`);
-        await queryRunner.query(`ALTER TABLE "artists" DROP COLUMN "name"`);
-        await queryRunner.query(`ALTER TABLE "artists" ADD "name" text NOT NULL`);
         await queryRunner.query(`ALTER TABLE "users" ALTER COLUMN "version" DROP NOT NULL`);
         await queryRunner.query(`ALTER TABLE "favs_tracks" DROP CONSTRAINT "PK_5b35195f43e0a5cf3a321e46c77"`);
         await queryRunner.query(`ALTER TABLE "favs_albums" DROP CONSTRAINT "PK_4ef6e5adf1218448adc31434375"`);
