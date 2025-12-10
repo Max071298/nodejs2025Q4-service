@@ -22,7 +22,15 @@ export class TrackEntity {
   @Column({ type: 'uuid', nullable: true })
   albumId: string | null;
 
-  @Column({ type: 'numeric', nullable: false })
+  @Column({
+    type: 'numeric',
+    nullable: false,
+    transformer: {
+      from: (value: number | string) =>
+        typeof value === 'string' ? parseInt(value, 10) : value,
+      to: (value: number) => value,
+    },
+  })
   duration: number;
 
   @ManyToOne(() => ArtistEntity, (artist) => artist.tracks, {

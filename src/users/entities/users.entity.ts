@@ -14,10 +14,26 @@ export class UserEntity {
   @Column({ type: 'int', default: 1, nullable: false })
   version: number;
 
-  @Column({ type: 'bigint', nullable: false })
+  @Column({
+    type: 'bigint',
+    nullable: false,
+    transformer: {
+      from: (value: number | string) =>
+        typeof value === 'string' ? parseInt(value, 10) : value,
+      to: (value: number) => value,
+    },
+  })
   createdAt: number;
 
-  @Column({ type: 'bigint', nullable: false })
+  @Column({
+    type: 'bigint',
+    nullable: false,
+    transformer: {
+      from: (value: number | string) =>
+        typeof value === 'string' ? parseInt(value, 10) : value,
+      to: (value: number) => value,
+    },
+  })
   updatedAt: number;
 
   toResponse() {
