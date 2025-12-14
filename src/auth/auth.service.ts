@@ -4,9 +4,11 @@ import {
   Inject,
   Injectable,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { UsersService } from 'src/users/users.service';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -27,7 +29,7 @@ export class AuthService {
 
     const user = await this.usersService.findOneByLogin(login);
     if (!user) throw new ForbiddenException('There is no user with such login');
-    if (user.password !== password) {
+    if (!(await bcrypt.compare(password, user.password))) {
       throw new ForbiddenException('Incorrect password');
     } else {
       const payload = { sub: user.id, username: user.login };
