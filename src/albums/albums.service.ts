@@ -1,96 +1,70 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { randomUUID } from 'crypto';
+import {
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { Album } from './interfaces/album.interface';
 import { CreateAlbumDto } from './dto/create-album.dto';
-import { ArtistsService } from 'src/artists/artists.service';
-import { TracksService } from 'src/tracks/tracks.service';
-import { FavsService } from 'src/favs/favs.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { AlbumEntity } from './entities/albums.entity';
+import { QueryFailedError, Repository } from 'typeorm';
 
 @Injectable()
 export class AlbumsService {
-  private readonly albums: Album[] = [];
-  constructor(
-    @Inject(forwardRef(() => ArtistsService))
-    private artistsService: ArtistsService,
-    @Inject(forwardRef(() => TracksService))
-    private tracksService: TracksService,
-    @Inject(forwardRef(() => FavsService))
-    private favsService: FavsService,
-  ) {}
+  @InjectRepository(AlbumEntity)
+  private readonly albumsRepository: Repository<AlbumEntity>;
 
-  findAll(): Album[] {
-    return this.albums;
+  async findAll(): Promise<Album[]> {
+    return await this.albumsRepository.find();
   }
 
-  findOne(id: string): Album {
-    const album = this.albums.find((album) => album.id === id);
+  async findOne(id: string): Promise<Album> {
+    const album = await this.albumsRepository.findOne({ where: { id } });
 
-    if (!album) throw new Error('Album not found');
-    return album;
-  }
-
-  removeArtistfromAlbums(id: string): void {
-    this.albums.forEach((album) => {
-      if (album.artistId === id) album.artistId = null;
-    });
-  }
-
-  create(createAlbumDto: CreateAlbumDto) {
-    const { name, year, artistId } = createAlbumDto;
-    if (
-      typeof name !== 'string' ||
-      typeof year !== 'number' ||
-      (typeof artistId !== 'string' && artistId !== null)
-    )
-      throw new Error('Request body does not contain required fields');
-
-    if (typeof artistId === 'string') {
-      this.artistsService.findOne(artistId);
-    }
-
-    const id = randomUUID();
-
-    const newAlbum = { id, name, year, artistId };
-    this.albums.push(newAlbum);
-
-    return newAlbum;
-  }
-
-  update(id: string, createAlbumDto: CreateAlbumDto) {
-    const album = this.albums.find((album) => album.id === id);
-    if (!album) throw new Error('Album not found');
-
-    const { name, year, artistId } = createAlbumDto;
-
-    if (
-      (name !== undefined && typeof name !== 'string') ||
-      (year !== undefined && typeof year !== 'number') ||
-      (artistId !== undefined && typeof artistId !== 'string')
-    )
-      throw new Error('Invalid dto');
-
-    if (typeof artistId === 'string') {
-      const artist = this.artistsService.findOne(artistId);
-      if (artist) album.artistId = artistId;
-    }
-
-    if (artistId === null) album.artistId = artistId;
-
-    if (typeof name === 'string') album.name = name;
-    if (typeof year === 'number') album.year = year;
+    if (!album) throw new NotFoundException('Album not found');
 
     return album;
   }
 
-  delete(id: string) {
-    const albumPos = this.albums.findIndex((album) => album.id === id);
+  async create(createAlbumDto: CreateAlbumDto): Promise<Album> {
+    try {
+      const newAlbum = await this.albumsRepository.create(createAlbumDto);
+      return await this.albumsRepository.save(newAlbum);
+    } catch (err) {
+      if (err instanceof QueryFailedError && err.driverError.code === '23503') {
+        throw new UnprocessableEntityException(
+          'Artist with provided artistId doesn"t exist',
+        );
+      }
+    }
+  }
 
-    if (albumPos === -1) throw new Error('Album not found');
+  async update(id: string, createAlbumDto: CreateAlbumDto): Promise<Album> {
+    const updatedAlbum = await this.albumsRepository.findOne({ where: { id } });
+    if (!updatedAlbum) throw new NotFoundException('Album not found');
 
-    this.favsService.deleteAlbum(id, false);
-    this.albums.splice(albumPos, 1);
-    this.tracksService.removeAlbumFromTracks(id);
+    const { name, year, artistId } = createAlbumDto;
 
-    return `Album with id ${id} successfully deleted`;
+    updatedAlbum.artistId = artistId;
+    updatedAlbum.name = name;
+    updatedAlbum.year = year;
+
+    try {
+      return await this.albumsRepository.save(updatedAlbum);
+    } catch (err) {
+      if (err instanceof QueryFailedError && err.driverError.code === '23503') {
+        throw new UnprocessableEntityException(
+          'Artist with provided artistId doesn"t exist',
+        );
+      }
+    }
+  }
+
+  async delete(id: string) {
+    const result = await this.albumsRepository.delete(id);
+
+    if (result.affected) return '';
+
+    throw new NotFoundException('Album not found');
   }
 }

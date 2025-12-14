@@ -1,71 +1,52 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Artist } from './interfaces/artist.interface';
 import { CreateArtistDto } from './dto/create-artist.dto';
-import { randomUUID } from 'crypto';
-import { AlbumsService } from 'src/albums/albums.service';
-import { TracksService } from 'src/tracks/tracks.service';
-import { FavsService } from 'src/favs/favs.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { ArtistEntity } from './entities/artists.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class ArtistsService {
-  private readonly artists: Artist[] = [];
-  constructor(
-    @Inject(forwardRef(() => AlbumsService))
-    private albumsService: AlbumsService,
-    @Inject(forwardRef(() => TracksService))
-    private tracksService: TracksService,
-    @Inject(forwardRef(() => FavsService))
-    private favsService: FavsService,
-  ) {}
+  @InjectRepository(ArtistEntity)
+  private readonly artistsRepository: Repository<ArtistEntity>;
 
-  findAll(): Artist[] {
-    return this.artists;
+  async findAll(): Promise<Artist[]> {
+    const artists = await this.artistsRepository.find();
+    return artists;
   }
 
-  findOne(id: string): Artist {
-    const artist = this.artists.find((artist) => artist.id === id);
+  async findOne(id: string): Promise<Artist> {
+    const artist = await this.artistsRepository.findOne({ where: { id } });
 
-    if (!artist) throw new Error('Artist not found');
+    if (!artist) throw new NotFoundException('Artist not found');
     return artist;
   }
 
-  create(createArtistDto: CreateArtistDto) {
-    const { name, grammy } = createArtistDto;
-    if (typeof name !== 'string' || typeof grammy !== 'boolean')
-      throw new Error('Request body does not contain required fields');
+  async create(createArtistDto: CreateArtistDto): Promise<Artist> {
+    const newArtist = await this.artistsRepository.create(createArtistDto);
 
-    const id = randomUUID();
-
-    const newArtist = { id, name, grammy };
-    this.artists.push(newArtist);
-
-    return newArtist;
+    return await this.artistsRepository.save(newArtist);
   }
 
-  update(id: string, createArtistDto: CreateArtistDto) {
+  async update(id: string, createArtistDto: CreateArtistDto) {
     const { name, grammy } = createArtistDto;
-    if (typeof name !== 'string' && typeof grammy !== 'boolean')
-      throw new Error('Request body does not contain required fields');
 
-    const artist = this.artists.find((artist) => artist.id === id);
-    if (!artist) throw new Error('Artist not found');
+    const updatedArtist = await this.artistsRepository.findOne({
+      where: { id },
+    });
+    if (!updatedArtist) throw new NotFoundException('Artist not found');
 
-    if (name) artist.name = name;
-    if (typeof grammy === 'boolean') artist.grammy = grammy;
+    updatedArtist.name = name;
+    updatedArtist.grammy = grammy;
 
-    return artist;
+    return await this.artistsRepository.save(updatedArtist);
   }
 
-  delete(id: string) {
-    const artistPos = this.artists.findIndex((artist) => artist.id === id);
+  async delete(id: string) {
+    const result = await this.artistsRepository.delete(id);
 
-    if (artistPos === -1) throw new Error('Artist not found');
+    if (result.affected) return '';
 
-    this.favsService.deleteArtist(id, false);
-    this.artists.splice(artistPos, 1);
-    this.albumsService.removeArtistfromAlbums(id);
-    this.tracksService.removeArtistFromTracks(id);
-
-    return `Artist with id ${id} successfully deleted`;
+    throw new NotFoundException('Artist not found');
   }
 }

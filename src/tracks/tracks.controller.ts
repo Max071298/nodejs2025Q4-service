@@ -4,8 +4,6 @@ import {
   Delete,
   Get,
   HttpCode,
-  HttpException,
-  HttpStatus,
   Param,
   ParseUUIDPipe,
   Post,
@@ -20,68 +18,35 @@ export class TracksController {
   constructor(private tracksService: TracksService) {}
 
   @Get()
-  findAll(): Track[] {
-    return this.tracksService.findAll();
+  async findAll(): Promise<Track[]> {
+    return await this.tracksService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string): Track {
-    try {
-      return this.tracksService.findOne(id);
-    } catch (e) {
-      if (e.message === 'Track not found') {
-        throw new HttpException('Track not found', HttpStatus.NOT_FOUND);
-      }
-    }
+  async findOne(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+  ): Promise<Track> {
+    return await this.tracksService.findOne(id);
   }
 
   @Post()
-  create(@Body() createTrackDto: CreateTrackDto) {
-    try {
-      return this.tracksService.create(createTrackDto);
-    } catch (e) {
-      if (e.message === 'Request body does not contain required fields') {
-        throw new HttpException(
-          'Request body does not contain required fields',
-          HttpStatus.BAD_REQUEST,
-        );
-      } else if (e.message === 'Artist not found') {
-        throw new HttpException('Artist not found', HttpStatus.NOT_FOUND);
-      } else if (e.message === 'Album not found') {
-        throw new HttpException('Album not found', HttpStatus.NOT_FOUND);
-      }
-    }
+  async create(@Body() createTrackDto: CreateTrackDto): Promise<Track> {
+    return await this.tracksService.create(createTrackDto);
   }
 
   @Put(':id')
-  update(
+  async update(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Body() createTrackDto: CreateTrackDto,
-  ) {
-    try {
-      return this.tracksService.update(id, createTrackDto);
-    } catch (e) {
-      if (e.message === 'Track not found') {
-        throw new HttpException('Track not found', HttpStatus.NOT_FOUND);
-      } else if (e.message === 'Artist not found') {
-        throw new HttpException('Artist not found', HttpStatus.NOT_FOUND);
-      } else if (e.message === 'Album not found') {
-        throw new HttpException('Album not found', HttpStatus.NOT_FOUND);
-      } else if (e.message === 'Invalid dto') {
-        throw new HttpException('Invalid dto', HttpStatus.BAD_REQUEST);
-      }
-    }
+  ): Promise<Track> {
+    return await this.tracksService.update(id, createTrackDto);
   }
 
   @Delete(':id')
   @HttpCode(204)
-  delete(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string): string {
-    try {
-      return this.tracksService.delete(id);
-    } catch (e) {
-      if (e.message === 'Track not found') {
-        throw new HttpException('Track not found', HttpStatus.NOT_FOUND);
-      }
-    }
+  async delete(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+  ): Promise<string> {
+    return await this.tracksService.delete(id);
   }
 }

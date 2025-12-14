@@ -4,8 +4,6 @@ import {
   Delete,
   Get,
   HttpCode,
-  HttpException,
-  HttpStatus,
   Param,
   ParseUUIDPipe,
   Post,
@@ -21,74 +19,35 @@ export class UsersController {
   constructor(private usersService: UsersService) {}
 
   @Get()
-  findAll(): Partial<User>[] {
-    return this.usersService.findAll();
+  async findAll(): Promise<Partial<User>[]> {
+    return await this.usersService.findAll();
   }
 
   @Get(':id')
-  findOne(
+  async findOne(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
-  ): Partial<User> {
-    try {
-      return this.usersService.findOne(id);
-    } catch (e) {
-      if (e.message === 'User not found') {
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-      }
-    }
+  ): Promise<Partial<User>> {
+    return await this.usersService.findOne(id);
   }
 
   @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    try {
-      return this.usersService.create(createUserDto);
-    } catch (e) {
-      if (e.message === 'Request body does not contain required fields') {
-        throw new HttpException(
-          'Request body does not contain required fields',
-          HttpStatus.BAD_REQUEST,
-        );
-      } else if (e.message === 'Current user already exists') {
-        throw new HttpException(
-          'Current user already exists',
-          HttpStatus.FORBIDDEN,
-        );
-      }
-    }
+  async create(@Body() createUserDto: CreateUserDto) {
+    return await this.usersService.create(createUserDto);
   }
 
   @Put(':id')
-  updatePassword(
+  async updatePassword(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Body() updatePasswordDto: UpdatePasswordDto,
   ) {
-    try {
-      return this.usersService.updatePassword(id, updatePasswordDto);
-    } catch (e) {
-      if (e.message === 'User not found') {
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-      } else if (e.message === 'Invalid old password') {
-        throw new HttpException('Invalid old password', HttpStatus.FORBIDDEN);
-      } else if (
-        e.message === 'Request body does not contain required fields'
-      ) {
-        throw new HttpException(
-          'Request body does not contain required fields',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-    }
+    return await this.usersService.updatePassword(id, updatePasswordDto);
   }
 
   @Delete(':id')
   @HttpCode(204)
-  delete(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string): string {
-    try {
-      return this.usersService.delete(id);
-    } catch (e) {
-      if (e.message === 'User not found') {
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-      }
-    }
+  async delete(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+  ): Promise<string> {
+    return await this.usersService.delete(id);
   }
 }

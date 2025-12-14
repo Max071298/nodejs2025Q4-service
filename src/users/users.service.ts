@@ -1,72 +1,77 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { User } from './interfaces/user.interface';
 import { CreateUserDto } from './dto/create-user.dto';
-import { randomUUID } from 'crypto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { UserEntity } from './entities/users.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class UsersService {
-  private readonly users: User[] = [];
+  @InjectRepository(UserEntity)
+  private usersRepository: Repository<UserEntity>;
 
-  create(user: CreateUserDto) {
+  async create(user: CreateUserDto): Promise<Partial<User>> {
     const { login, password } = user;
-    if (typeof login !== 'string' || typeof password !== 'string')
-      throw new Error('Request body does not contain required fields');
-    const isALreadyExist = this.users.find((user) => user.login === login);
-    if (isALreadyExist) throw new Error('Current user already exists');
 
-    const id = randomUUID();
-    const version = 1;
-    const createdAt = Date.now();
-    const updatedAt = createdAt;
-    const newUser = { login, password, id, version, createdAt, updatedAt };
-    this.users.push(newUser);
-    return { login, id, version, createdAt, updatedAt };
-  }
-
-  findAll(): Partial<User>[] {
-    return this.users.map((user) => {
-      const { password, ...formattedUser } = user;
-      return formattedUser;
+    const isALreadyExist = await this.usersRepository.findOneBy({
+      login: login,
     });
+
+    if (isALreadyExist)
+      throw new ForbiddenException('Current user already exists');
+
+    const newUser = await this.usersRepository.create(user);
+
+    newUser.password = password;
+    newUser.version = 1;
+    newUser.createdAt = Date.now();
+    newUser.updatedAt = newUser.createdAt;
+
+    return (await this.usersRepository.save(newUser)).toResponse();
   }
 
-  findOne(id: string): Partial<User> {
-    const user = this.users.find((user) => user.id === id);
+  async findAll(): Promise<Partial<User>[]> {
+    const users = await this.usersRepository.find();
+
+    return users.map((user) => user.toResponse());
+  }
+
+  async findOne(id: string): Promise<Partial<User>> {
+    const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundException('User not found');
     } else {
-      const { password, ...formattedUser } = user;
-      return formattedUser;
+      return user.toResponse();
     }
   }
 
-  updatePassword(id: string, updatePassword: UpdatePasswordDto): Partial<User> {
-    if (
-      updatePassword.oldPassword === undefined ||
-      updatePassword.newPassword === undefined
-    )
-      throw new Error('Request body does not contain required fields');
-
-    const user = this.users.find((user) => user.id === id);
-    if (!user) throw new Error('User not found');
+  async updatePassword(
+    id: string,
+    updatePassword: UpdatePasswordDto,
+  ): Promise<Partial<User>> {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    if (!user) throw new NotFoundException('User not found');
 
     if (user.password !== updatePassword.oldPassword)
-      throw new Error('Invalid old password');
+      throw new ForbiddenException('Invalid old password');
+
     user.password = updatePassword.newPassword;
     user.updatedAt = Date.now();
     user.version++;
 
-    const { password, ...userToReturn } = user;
-    return userToReturn;
+    return (await this.usersRepository.save(user)).toResponse();
   }
 
-  delete(id: string): string {
-    const userPos = this.users.findIndex((user) => user.id === id);
-    if (userPos === -1) throw new Error('User not found');
+  async delete(id: string): Promise<string> {
+    const result = await this.usersRepository.delete(id);
 
-    this.users.splice(userPos, 1);
+    if (result.affected) return '';
 
-    return `User with id ${id} successfully deleted`;
+    throw new NotFoundException('User not found');
   }
 }

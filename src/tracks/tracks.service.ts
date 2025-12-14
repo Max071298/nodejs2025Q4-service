@@ -1,117 +1,97 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { randomUUID } from 'crypto';
-import { ArtistsService } from 'src/artists/artists.service';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { Track } from './interfaces/track.interface';
 import { CreateTrackDto } from './dto/create-track.dto';
-import { AlbumsService } from 'src/albums/albums.service';
-import { FavsService } from 'src/favs/favs.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { TrackEntity } from './entities/tracks.entity';
+import { QueryFailedError, Repository } from 'typeorm';
 
 @Injectable()
 export class TracksService {
-  private readonly tracks: Track[] = [];
-  constructor(
-    @Inject(forwardRef(() => ArtistsService))
-    private artistsService: ArtistsService,
-    @Inject(forwardRef(() => AlbumsService))
-    private albumsService: AlbumsService,
-    @Inject(forwardRef(() => FavsService))
-    private favsService: FavsService,
-  ) {}
+  @InjectRepository(TrackEntity)
+  private readonly tracksRepository: Repository<TrackEntity>;
 
-  findAll(): Track[] {
-    return this.tracks;
+  async findAll(): Promise<Track[]> {
+    return await this.tracksRepository.find();
   }
 
-  findOne(id: string): Track {
-    const track = this.tracks.find((track) => track.id === id);
+  async findOne(id: string): Promise<Track> {
+    const track = await this.tracksRepository.findOne({ where: { id } });
 
-    if (!track) throw new Error('Track not found');
+    if (!track) throw new NotFoundException('Track not found');
     return track;
   }
 
-  create(createTrackDto: CreateTrackDto) {
+  async create(createTrackDto: CreateTrackDto): Promise<Track> {
+    const { artistId, albumId } = createTrackDto;
+    if (artistId === undefined || albumId === undefined)
+      throw new BadRequestException(
+        'artistId and albumId must be identified (or be null)',
+      );
+    try {
+      const newTrack = await this.tracksRepository.create(createTrackDto);
+
+      return await this.tracksRepository.save(newTrack);
+    } catch (err) {
+      if (err instanceof QueryFailedError && err.driverError.code === '23503') {
+        if (err.driverError.constraint === 'tracks_artistid_fkey')
+          throw new UnprocessableEntityException(
+            'Artist with provided artistId doesn"t exist',
+          );
+
+        if (err.driverError.constraint === 'tracks_albumid_fkey')
+          throw new UnprocessableEntityException(
+            'Album with provided albumId doesn"t exist',
+          );
+      }
+    }
+  }
+
+  async update(id: string, createTrackDto: CreateTrackDto): Promise<Track> {
+    const newTrack = await this.tracksRepository.findOne({ where: { id } });
+
+    if (!newTrack) throw new NotFoundException('Track not found');
+
     const { name, artistId, albumId, duration } = createTrackDto;
-    if (
-      typeof name !== 'string' ||
-      typeof duration !== 'number' ||
-      (typeof artistId !== 'string' && artistId !== null) ||
-      (typeof albumId !== 'string' && albumId !== null)
-    )
-      throw new Error('Request body does not contain required fields');
 
-    if (typeof artistId === 'string') {
-      this.artistsService.findOne(artistId);
+    if (newTrack === undefined || newTrack === undefined)
+      throw new BadRequestException(
+        'artistId and albumId must be identified (or be null)',
+      );
+
+    newTrack.artistId = artistId;
+    newTrack.albumId = albumId;
+    newTrack.name = name;
+    newTrack.duration = duration;
+
+    try {
+      return await this.tracksRepository.save(newTrack);
+    } catch (err) {
+      if (err instanceof QueryFailedError && err.driverError.code === '23503') {
+        if (err.driverError.constraint === 'tracks_artistid_fkey')
+          throw new UnprocessableEntityException(
+            'Artist with provided artistId doesn"t exist',
+          );
+
+        if (err.driverError.constraint === 'tracks_albumid_fkey')
+          throw new UnprocessableEntityException(
+            'Album with provided albumId doesn"t exist',
+          );
+      }
     }
-
-    if (typeof albumId === 'string') {
-      this.albumsService.findOne(albumId);
-    }
-
-    const id = randomUUID();
-
-    const newTrack = { id, name, artistId, albumId, duration };
-    this.tracks.push(newTrack);
-
-    return newTrack;
   }
 
-  update(id: string, createTrackDto: CreateTrackDto) {
-    const track = this.tracks.find((track) => track.id === id);
-    if (!track) throw new Error('Track not found');
+  async delete(id: string): Promise<string> {
+    const result = await this.tracksRepository.delete(id);
 
-    const { name, artistId, albumId, duration } = createTrackDto;
-
-    if (
-      (name !== undefined && typeof name !== 'string') ||
-      (artistId !== undefined &&
-        typeof artistId !== 'string' &&
-        artistId !== null) ||
-      (albumId !== undefined &&
-        typeof albumId !== 'string' &&
-        albumId !== null) ||
-      (duration !== undefined && typeof duration !== 'number')
-    )
-      throw new Error('Invalid dto');
-
-    if (typeof artistId === 'string') {
-      const artist = this.artistsService.findOne(artistId);
-      if (artist) track.artistId = artistId;
+    if (result.affected) {
+      return '';
     }
 
-    if (typeof albumId === 'string') {
-      const album = this.albumsService.findOne(albumId);
-      if (album) track.albumId = albumId;
-    }
-
-    if (artistId === null) track.artistId = artistId;
-    if (albumId === null) track.albumId = albumId;
-
-    if (typeof name === 'string') track.name = name;
-    if (typeof duration === 'number') track.duration = duration;
-
-    return track;
-  }
-
-  delete(id: string) {
-    const trackPos = this.tracks.findIndex((track) => track.id === id);
-
-    if (trackPos === -1) throw new Error('Track not found');
-
-    this.favsService.deleteTrack(id, false);
-    this.tracks.splice(trackPos, 1);
-
-    return `Track with id ${id} successfully deleted`;
-  }
-
-  removeArtistFromTracks(id: string) {
-    this.tracks.forEach((track) => {
-      if (track.artistId === id) track.artistId = null;
-    });
-  }
-
-  removeAlbumFromTracks(id: string) {
-    this.tracks.forEach((track) => {
-      if (track.albumId === id) track.albumId = null;
-    });
+    throw new NotFoundException('Track not found');
   }
 }

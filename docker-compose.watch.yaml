@@ -1,0 +1,7 @@
+group: default
+
+services:
+  app:
+    sync:
+      - path: ./src
+        target: /app/src

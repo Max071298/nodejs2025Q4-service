@@ -3,7 +3,7 @@ import { Artist } from 'src/artists/interfaces/artist.interface';
 import { Track } from 'src/tracks/interfaces/track.interface';
 
 export interface FavsResponse {
-  artists: Artist[];
-  albums: Album[];
-  tracks: Track[];
+  artists: Promise<Artist>[];
+  albums: Promise<Album>[];
+  tracks: Promise<Track>[];
 }

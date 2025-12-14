@@ -14,7 +14,7 @@ git clone https://github.com/Max071298/nodejs2025Q4-service
 ## Installing NPM modules
 
 ```
-npm install
+npm install --legacy-peer-deps
 ```
 
 ## Create .env file from .env.example
@@ -22,9 +22,45 @@ npm install
 
 ## Running application
 
+#### 1.Create .env file
+
 ```
-npm start
+cp .env.example .env
 ```
+
+#### 2.Clear docker workspace from earlier content (images, containers, volumes). Hint: you must open your DockerDesktop application
+
+```
+docker system prune -a
+```
+
+#### 3.Clear old migrations and containers (strongly recommended to do this before running application)
+
+```
+npm run clean:docker-migrations
+```
+
+#### 4.Compose postgres image
+
+```
+npm run db:up
+```
+
+#### 5.Generate and run migrations
+
+```
+npm run migration:prepare
+```
+
+#### 6. Make docker compose for server and db and run the server
+
+```
+npm run docker:compose
+```
+
+#### Now u can ran all the tests and check work
+
+####
 
 After starting the app on port (4000 as default) you can open
 in your browser OpenAPI documentation by typing http://localhost:4000/api.
