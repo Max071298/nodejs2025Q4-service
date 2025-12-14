@@ -50,14 +50,9 @@ export class UsersService {
     }
   }
   async findOneByLogin(login: string): Promise<User> {
-    const user = await this.usersRepository.findOneBy({
+    return await this.usersRepository.findOneBy({
       login: login,
     });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    } else {
-      return user;
-    }
   }
 
   async updatePassword(

@@ -1,8 +1,8 @@
 import {
+  ForbiddenException,
   forwardRef,
   Inject,
   Injectable,
-  NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
@@ -26,9 +26,9 @@ export class AuthService {
     const { login, password } = createUserDto;
 
     const user = await this.usersService.findOneByLogin(login);
-
+    if (!user) throw new ForbiddenException('There is no user with such login');
     if (user.password !== password) {
-      throw new NotFoundException('Incorrect password');
+      throw new ForbiddenException('Incorrect password');
     } else {
       const payload = { sub: user.id, username: user.login };
       return { access_token: await this.jwtService.signAsync(payload) };
