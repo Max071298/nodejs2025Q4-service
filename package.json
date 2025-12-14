@@ -33,7 +33,7 @@
     "migration:run": "cross-env POSTGRES_HOST=localhost npx ts-node -P ./tsconfig.json -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -d ./typeorm.config.ts",
     "migration:revert": "cross-env POSTGRES_HOST=localhost npx ts-node -P ./tsconfig.json -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:revert -d ./typeorm.config.ts",
     "migration:prepare": "npm run migration:generate && npm run migration:run",
-    "clean:docker-migrations": "del-cli --f ./src/migrations/*.ts && docker system prune -a"
+    "clean:docker-migrations": "del-cli --f ./src/migrations/*.ts && docker compose down -v"
   },
   "dependencies": {
     "@nestjs/cli": "^11.0.14",

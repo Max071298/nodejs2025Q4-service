@@ -45,9 +45,6 @@ services:
       - '${PORT}:${PORT}'
     env_file:
       - .env
-    environment:
-      - POSTGRES_HOST=db
-      - TYPEORM_SYNC=true
     networks:
       - net
 
