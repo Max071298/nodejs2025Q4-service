@@ -12,39 +12,45 @@ services:
   db:
     build:
       context: .
-      dockerFile: DockerFile.pg
+      dockerfile: Dockerfile.pg
     container_name: db
     restart: on-failure
     ports:
       - '${POSTGRES_PORT}:${POSTGRES_PORT}'
     env_file:
       - .env
+    environment:
+      - POSTGRES_DB=${POSTGRES_DATABASE}
     networks:
       - net
     volumes:
-      - db-data:/var/lib/postgresql/data
-      - db-logs:/var/lib/postgresql/logs
+      - ./volumes/db:/var/lib/postgresql/data
+      - ./volumes/db_logs:/var/lib/postgresql/logs
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   app:
     build:
       context: .
-      dockerFile: DockerFile.app
+      dockerfile: Dockerfile.app
     container_name: home-library-service
-    depends_on: db
+    depends_on:
+      db:
+        condition: service_healthy
     restart: on-failure
     ports:
       - '${PORT}:${PORT}'
     env_file:
       - .env
-    volumes:
-      - ./src:/app/src
+    environment:
+      - POSTGRES_HOST=db
+      - TYPEORM_SYNC=true
     networks:
       - net
 
-  volumes:
-    db-data:
-    db-logs:
-
-  networks:
-    net:
-      driver: bridge
+networks:
+  net:
+    driver: bridge

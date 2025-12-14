@@ -23,12 +23,20 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "migration:generate": "npx ts-node -P ./tsconfig.json -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate -d ./src/typeorm.config.ts ./src/migrations/migration",
-    "migration:create": "npx ts-node -P ./tsconfig.json -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:create ./src/migrations/migration",
-    "migration:run": "npx ts-node -P ./tsconfig.json -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -d ./src/typeorm.config.ts",
-    "migration:revert": "npx ts-node -P ./tsconfig.json -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:revert -d ./src/typeorm.config.ts"
+    "docker:build-postgres": "docker build -f ./Dockerfile.pg -t postgres . && docker network create net",
+    "docker:run-postgres": "docker run -p 5432:5432 --env-file .env --network=net --name=db postgres",
+    "db:up": "docker-compose up -d db",
+    "docker:compose": "docker compose --profile develop up --build --watch",
+    "docker:scan": "docker scout cves",
+    "migration:generate": "cross-env POSTGRES_HOST=localhost npx ts-node -P ./tsconfig.json -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate -d ./typeorm.config.ts ./src/migrations/migration",
+    "migration:create": "cross-env POSTGRES_HOST=localhost npx ts-node -P ./tsconfig.json -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:create ./src/migrations/migration",
+    "migration:run": "cross-env POSTGRES_HOST=localhost npx ts-node -P ./tsconfig.json -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run -d ./typeorm.config.ts",
+    "migration:revert": "cross-env POSTGRES_HOST=localhost npx ts-node -P ./tsconfig.json -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:revert -d ./typeorm.config.ts",
+    "migration:prepare": "npm run migration:generate && npm run migration:run",
+    "clean:docker-migrations": "del-cli --f ./src/migrations/*.ts && docker system prune -a"
   },
   "dependencies": {
+    "@nestjs/cli": "^11.0.14",
     "@nestjs/common": "^10.4.16",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^10.4.15",
@@ -49,7 +57,6 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "@nestjs/cli": "^10.4.9",
     "@nestjs/schematics": "^10.0.3",
     "@nestjs/testing": "^10.2.8",
     "@types/bcrypt": "^5.0.2",
@@ -62,6 +69,7 @@
     "@typescript-eslint/eslint-plugin": "^7.1.1",
     "@typescript-eslint/parser": "^7.1.1",
     "cross-env": "^7.0.3",
+    "del-cli": "^7.0.0",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.1.3",

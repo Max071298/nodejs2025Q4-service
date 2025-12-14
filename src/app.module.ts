@@ -4,24 +4,29 @@ import { AppService } from './app.service';
 import { ArtistsModule } from './artists/artists.module';
 import { AlbumsModule } from './albums/albums.module';
 import { FavsModule } from './favs/favs.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.POSTGRES_HOST,
-      port: parseInt(process.env.POSTGRES_PORT),
-      username: process.env.POSTGRES_USER,
-      password: process.env.POSTGRES_PASSWORD,
-      database: process.env.POSTGRES_DATABASE,
-      synchronize: false,
-      entities: ['dist/**/entities/*.entity.js'],
-      migrations: ['dist/**/migration/*{.js,.ts}'],
-      migrationsRun: true,
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        type: 'postgres',
+        host: config.get('POSTGRES_HOST'),
+        port: parseInt(config.get('POSTGRES_PORT')),
+        username: config.get('POSTGRES_USER'),
+        password: config.get('POSTGRES_PASSWORD'),
+        database: config.get('POSTGRES_DATABASE'),
+        synchronize: false,
+        entities: [__dirname + '/**/entities/*.entity.{ts,js}'],
+        migrations: [__dirname + '/**/migrations/*.{ts,js}'],
+        autoLoadEntities: true,
+        migrationsRun: true,
+      }),
     }),
     ArtistsModule,
     AlbumsModule,

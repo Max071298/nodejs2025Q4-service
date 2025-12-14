@@ -8,9 +8,13 @@ import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const openAPIYaml = await fs.readFile('doc/api.yaml', 'utf8');
-  const documentFactory = yaml.load(openAPIYaml) as OpenAPIObject;
-  SwaggerModule.setup('api', app, documentFactory);
+  try {
+    const openAPIYaml = await fs.readFile('doc/api.yaml', 'utf8');
+    const documentFactory = yaml.load(openAPIYaml) as OpenAPIObject;
+    SwaggerModule.setup('api', app, documentFactory);
+  } catch (err) {
+    console.warn('Swagger doc not available at doc/api.yaml, skipping setup.');
+  }
   const configService = app.get(ConfigService);
   app.useGlobalPipes(new ValidationPipe());
   const port = configService.get<number>('PORT') || 4000;
