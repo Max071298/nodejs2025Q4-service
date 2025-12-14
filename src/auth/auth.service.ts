@@ -20,12 +20,18 @@ export class AuthService {
     this.usersService.create(createUserDto);
   }
 
-  async signIn(createUserDto: CreateUserDto) {
+  async signIn(
+    createUserDto: CreateUserDto,
+  ): Promise<{ access_token: string }> {
     const { login, password } = createUserDto;
 
     const user = await this.usersService.findOneByLogin(login);
 
-    if (user.password !== password)
+    if (user.password !== password) {
       throw new NotFoundException('Incorrect password');
+    } else {
+      const payload = { sub: user.id, username: user.login };
+      return { access_token: await this.jwtService.signAsync(payload) };
+    }
   }
 }
