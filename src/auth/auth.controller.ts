@@ -20,7 +20,6 @@ export class AuthController {
     return await this.authService.signIn(createUserDto);
   }
 
-  @SkipAuth()
   @Post('refresh')
   async refresh(@Body() refreshTokenDto: RefreshTokenDto) {
     return await this.authService.refresh(refreshTokenDto);

@@ -75,7 +75,11 @@ export class UsersService {
     if (!(await bcrypt.compare(updatePassword.oldPassword, user.password)))
       throw new ForbiddenException('Invalid old password');
 
-    user.password = updatePassword.newPassword;
+    const hashNewPassword = await bcrypt.hash(
+      updatePassword.newPassword,
+      this.configService.get('CRYPT_SALT'),
+    );
+    user.password = hashNewPassword;
     user.updatedAt = Date.now();
     user.version++;
 
