@@ -49,6 +49,16 @@ export class UsersService {
       return user.toResponse();
     }
   }
+  async findOneByLogin(login: string): Promise<User> {
+    const user = await this.usersRepository.findOneBy({
+      login: login,
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    } else {
+      return user;
+    }
+  }
 
   async updatePassword(
     id: string,
