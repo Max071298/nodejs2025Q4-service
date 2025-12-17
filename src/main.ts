@@ -4,16 +4,29 @@ import { ConfigService } from '@nestjs/config';
 import { OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 import * as fs from 'fs/promises';
 import * as yaml from 'js-yaml';
-import { HttpException, ValidationPipe } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { CustomLogger } from './logger/logger.service';
 import { HttpExceptionFilter } from './logger/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
-  app.useLogger(new CustomLogger());
+
+  const customLogger = app.get(CustomLogger);
+  app.useLogger(customLogger);
 
   const httpAdapterHost = app.get(HttpAdapterHost);
-  app.useGlobalFilters(new HttpExceptionFilter(httpAdapterHost));
+  app.useGlobalFilters(new HttpExceptionFilter(httpAdapterHost, customLogger));
+
+  process.on('unhandledRejection', (reason: any, promise) => {
+    customLogger.error(
+      `Unhandled Rejection at: ${promise} reason: ${reason}`,
+      reason?.stack,
+    );
+  });
+
+  process.on('uncaughtException', (error: Error) => {
+    customLogger.error(`Uncaught Exception: ${error.message}`, error.stack);
+  });
 
   try {
     const openAPIYaml = await fs.readFile('doc/api.yaml', 'utf8');

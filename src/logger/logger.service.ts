@@ -14,10 +14,12 @@ const LEVEL_PRIORITIES: Record<LogLevel, number> = {
 @Injectable()
 export class CustomLogger extends ConsoleLogger {
   log(message: any, context?: string) {
-    // console.log(`[LOG] ${context ? `[${context}] ` : ''}${message}`);
+    super.log(message, context);
   }
 
-  error(message: any, stack?: string, context?: string) {}
+  error(message: any, stack?: string, context?: string) {
+    super.error(message, stack, context);
+  }
 
   warn(message: any, context?: string) {}
 
