@@ -77,7 +77,7 @@ export class UsersService {
 
     const hashNewPassword = await bcrypt.hash(
       updatePassword.newPassword,
-      this.configService.get('CRYPT_SALT'),
+      +this.configService.get('CRYPT_SALT'),
     );
     user.password = hashNewPassword;
     user.updatedAt = Date.now();

@@ -27,7 +27,7 @@ export class AuthService {
 
   async signIn(
     createUserDto: CreateUserDto,
-  ): Promise<{ access_token: string; refresh_token: string }> {
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     const { login, password } = createUserDto;
 
     const user = await this.usersService.findOneByLogin(login);
@@ -36,44 +36,44 @@ export class AuthService {
       throw new ForbiddenException('Incorrect password');
     } else {
       const payload = { sub: user.id, username: user.login };
-      const access_token = await this.jwtService.signAsync(payload, {
+      const accessToken = await this.jwtService.signAsync(payload, {
         secret: this.configService.get('JWT_SECRET_KEY'),
         expiresIn: this.configService.get('TOKEN_EXPIRE_TIME'),
       });
 
-      const refresh_token = await this.jwtService.signAsync(payload, {
+      const refreshToken = await this.jwtService.signAsync(payload, {
         secret: this.configService.get('JWT_SECRET_REFRESH_KEY'),
         expiresIn: this.configService.get('TOKEN_REFRESH_EXPIRE_TIME'),
       });
 
-      return { access_token, refresh_token };
+      return { accessToken, refreshToken };
     }
   }
 
   async refresh(
     refreshTokenDto: RefreshTokenDto,
-  ): Promise<{ access_token: string; refresh_token: string }> {
-    const { refreshToken } = refreshTokenDto;
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    const oldRefreshToken = refreshTokenDto.refreshToken;
 
-    if (!refreshToken && typeof refreshToken !== 'string')
+    if (!oldRefreshToken && typeof oldRefreshToken !== 'string')
       throw new UnauthorizedException('Invalid data');
 
     try {
-      const payload = await this.jwtService.verifyAsync(refreshToken, {
+      const payload = await this.jwtService.verifyAsync(oldRefreshToken, {
         secret: this.configService.get('JWT_SECRET_REFRESH_KEY'),
       });
 
-      const access_token = await this.jwtService.signAsync(payload, {
+      const accessToken = await this.jwtService.signAsync(payload, {
         secret: this.configService.get('JWT_SECRET_KEY'),
         expiresIn: this.configService.get('TOKEN_EXPIRE_TIME'),
       });
 
-      const refresh_token = await this.jwtService.signAsync(payload, {
+      const refreshToken = await this.jwtService.signAsync(payload, {
         secret: this.configService.get('JWT_SECRET_REFRESH_KEY'),
         expiresIn: this.configService.get('TOKEN_REFRESH_EXPIRE_TIME'),
       });
 
-      return { access_token, refresh_token };
+      return { accessToken, refreshToken };
     } catch {
       throw new ForbiddenException('Invalid refresh token');
     }
